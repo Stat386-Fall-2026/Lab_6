@@ -14,109 +14,170 @@ jupyter: python3
 
 # Objective
 
-In Lab 5, you made cleaning decisions explicit and reproducible in a data-processing pipeline. In this lab, you will collect a small dataset from a live website, preserve the extracted records before cleaning, and compare HTML scraping with a JSON API.
+In Lab 5, you made cleaning decisions explicit and reproducible in a data-processing pipeline. In this lab, you will inspect a website's scraping guidance, complete a small HTML-extraction function, collect a dataset, and preserve the extracted records before cleaning.
 
-You will work with the official [October 2025 General Conference index](https://www.churchofjesuschrist.org/study/general-conference/2025/10?lang=eng). The goal is to collect talk metadata and transcript text for one conference—not to crawl the whole website.
+You will work with the official [October 2025 General Conference index](https://www.churchofjesuschrist.org/study/general-conference/2025/10?lang=eng). The goal is to collect metadata and article text for one conference.
 
 ## Before you begin
 
 - Work only within the designated October 2025 conference.
-- Do not download a cached HTML file or use a prebuilt copy of the scraped output.
-- Keep requests polite and bounded. The provided script waits between talk-page requests and does not follow links outside the conference.
-- The raw file is evidence of what the scraper extracted. Do not manually edit it or silently clean text while scraping.
-- A page layout can change. If your scraper returns no talks, inspect the current page and explain the problem rather than weakening checks until it appears to work.
+- Complete the source-guidance check below before making automated requests.
+- Collect your raw dataset from the live website. Do not substitute a prebuilt dataset or someone else's saved HTML. The small HTML examples below are only for practicing title extraction.
+- Keep requests polite and bounded. The supplied script limits the number of pages and waits between requests.
+- Once collection works, keep the raw CSV unchanged. Render this document from the saved data rather than scraping again on every render.
+- If access is prohibited or collection fails, document the issue and contact the instructor. Do not bypass restrictions or expand the scrape to find a workaround.
 
-# Part 1: Inspect the source page
+# Part 1: Check the source before collecting
 
-## 1. Understand the page structure
+## 1. Inspect the website's guidance
 
-Open the conference index in a browser. Identify how the page represents sessions and individual talks. Find two individual talk links and inspect one talk page.
+Before running the scraper:
+
+1. Open the [robots.txt file](https://www.churchofjesuschrist.org/robots.txt).
+2. Identify the instructions that apply to the scraper's User-Agent and the planned `/study/general-conference/2025/10` paths.
+3. Find and review the website's relevant terms or use restrictions, using links provided on the site.
+4. Consider the data being collected, the number of requests, and the planned use in this private course repository.
+
+For this course, proceed only when the pages are publicly accessible without signing in, neither the relevant terms nor `robots.txt` prohibits the planned collection, and the collection and use fit the course guidelines. If you are unsure, ask the instructor before running the scraper.
+
+`robots.txt` communicates crawling instructions; it is not comprehensive permission to collect, reuse, or redistribute content. These course expectations are not guarantees of legality.
+
+**Your answer:** Record the date you checked, links to the guidance you reviewed, and any relevant rules. Explain whether the planned collection fits that guidance and the course expectations. Do not treat the absence of a matching `Disallow` rule as the only consideration.
+
+## 2. Understand the page structure
+
+Open the conference index in a browser. Identify how it represents sessions and individual entries. Find two individual entry links and inspect one article page.
+
+For this lab, keep individual article entries linked from the conference index, including the introduction and sustaining proceedings. Exclude session overview pages and the conference index itself. We use "talk" as shorthand for these individual entries.
 
 **Your answer:** In 3–5 sentences, explain the difference between HTML, an HTML element, a URL, and a row in a DataFrame. Why is the conference index a useful starting point for a bounded scrape?
 
-## 2. Run the starter scraper
+# Part 2: Complete and run the scraper
 
-The reusable scraper is in `scripts/scrape_data.py`. Read it before running it.
+## 3. Write a title-extraction function
+
+Read `scripts/scrape_data.py`. Most of the scraper is supplied. Your coding task is to complete `extract_title(soup)`.
+
+The function receives a Beautiful Soup object and should return a string:
+
+1. Use `soup.select_one("h1")` to find the first primary heading.
+2. If the heading exists and its text is not blank, return its text.
+3. Otherwise, return the text of the `<title>` element if it exists.
+4. If neither element provides a title, return an empty string.
+
+Use `node.get_text(" ", strip=False)` to extract text from an element. You may use `.strip()` to check whether text is blank, but return the original extracted string. Standardizing whitespace belongs in the cleaning step.
+
+Replace the `raise NotImplementedError(...)` line with your code. You do not need to change the request-handling or link-discovery functions.
+
+Try your function on these small examples before making requests:
 
 ```{python}
 from pathlib import Path
 import pandas as pd
+from bs4 import BeautifulSoup
+from scripts.scrape_data import extract_title
 
-raw_path = Path("data/raw/talks_raw.csv")
-print(f"Raw file exists: {raw_path.exists()}")
+heading_example = BeautifulSoup(
+    "<html><head><title>Browser title</title></head>"
+    "<body><h1>Practice talk title</h1></body></html>",
+    "html.parser",
+)
+fallback_example = BeautifulSoup(
+    "<html><head><title>Fallback title</title></head><body></body></html>",
+    "html.parser",
+)
+
+print(extract_title(heading_example))
+print(extract_title(fallback_example))
 ```
 
-Run the scraper from the repository root in the terminal:
+The results should be `Practice talk title` and `Fallback title`.
+
+## 4. Collect and inspect the raw data
+
+After completing the source-guidance check and title function, run the scraper from the repository root in the terminal:
 
 ```bash
 uv run python scripts/scrape_data.py
 ```
 
+Record when you ran the scraper and note any warnings. If a page layout has changed, inspect the current page rather than removing checks until the scraper appears to work.
+
 Then load the raw output:
 
 ```{python}
-talks_raw = pd.read_csv("data/raw/talks_raw.csv")
+raw_path = Path("data/raw/talks_raw.csv")
+talks_raw = pd.read_csv(raw_path)
 talks_raw.head()
 ```
 
-Report the number of records and columns, the number of distinct links, and the number of records with empty transcript text.
+Report the number of records and columns, the number of distinct links, and the number of records with missing or whitespace-only article text.
 
 ```{python}
 # Add your inspection code here.
 ```
 
-**Your answer:** Did the extracted records match what you expected from the page? Identify one limitation or uncertainty in the fields the scraper extracted.
+The supplied scraper intentionally leaves `date` blank and stores `conference` as `October 2025`. Do not invent an exact date. The speaker heuristic may leave names missing or include a role in the byline; report these limitations rather than guessing missing values.
 
-# Part 2: Understand and validate the scraper
+The raw `text` field contains text from the selected article region. It may include the heading, byline, introductory material, and notes as well as the spoken transcript.
 
-## 3. Trace the collection process
+**Your answer:** When did you collect the data? Did the extracted records match what you expected from the page? Identify one limitation or uncertainty in the extracted fields.
 
-Read `scripts/scrape_data.py` and locate where it:
+# Part 3: Understand and validate the scraper
+
+## 5. Trace the collection process
+
+Locate where `scripts/scrape_data.py`:
 
 - sends an HTTP request with a descriptive User-Agent;
 - sets a timeout and checks the HTTP status;
 - waits between requests;
 - limits links to the selected conference and removes duplicate URLs;
-- extracts title, speaker, and text; and
+- extracts title, speaker, and article text; and
 - writes the raw records.
 
-**Your answer:** Explain why each of these practices matters. Include at least one example of how a scraper could appear to work while silently collecting incomplete or duplicated data.
+**Your answer:** Explain why each practice matters. Include at least one example of how a scraper could appear to work while silently collecting incomplete or duplicated data.
 
-## 4. Add validation checks
+## 6. Add validation checks
 
-Write checks for the raw dataset. At minimum, check that:
+At minimum, check that:
 
 - the file contains at least one record;
 - every link is unique;
-- every link belongs to the designated conference;
-- talk titles are not all missing; and
-- transcript text is retained as extracted, without being replaced by a cleaned or normalized version.
+- every link belongs to the designated conference; and
+- talk titles are not all missing or blank.
 
 ```{python}
 # Write validation checks here.
 ```
 
-Do not assume that a successful HTTP response guarantees that the page contains the content you expected.
+Also review the extraction and cleaning code to confirm that the raw CSV is not overwritten by cleaned or normalized values. Explain how the workflow keeps the stages separate. The CSV alone cannot prove that no earlier cleaning occurred.
 
-# Part 3: Clean after collection
+Do not assume that a successful HTTP response guarantees the expected content.
 
-## 5. Create a processed dataset
+# Part 4: Clean after collection
+
+## 7. Create a processed dataset
 
 Keep `data/raw/talks_raw.csv` unchanged. Create a separate processed file at `data/processed/talks_clean.csv`. Use the cleaning principles from Lab 5: make transformations explicit, preserve meaningful missing values, and validate the result.
 
 At minimum:
 
-- remove rows that are not individual talks, if any were collected;
+- remove any session overview or index pages if they were collected;
 - standardize leading/trailing whitespace in title and speaker fields;
-- create a `year` column from the conference identifier or date information;
-- calculate `num_words` from transcript text; and
+- create a `year` column from the conference label;
+- calculate `num_words` from the extracted `text`; and
 - retain the source URL as `link`.
 
-Do not overwrite raw text. If you create a normalized text field, keep the original extracted text in the raw file and document the transformation.
+For this lab, define `num_words` as the number of whitespace-separated tokens in the entire extracted article text. It is an article-text word count, not an exact count of spoken words. Leave the count missing when the source text is missing.
+
+Do not overwrite raw text. If you create a normalized text field in the processed data, document the transformation and retain the original text in the raw CSV.
 
 ```{python}
 # Build talks_clean from talks_raw.
-# Save the result to data/processed/talks_clean.csv.
+# Create the output folder before saving:
+Path("data/processed").mkdir(parents=True, exist_ok=True)
+# Save talks_clean to data/processed/talks_clean.csv without the DataFrame index.
 ```
 
 Check the processed data:
@@ -125,34 +186,36 @@ Check the processed data:
 # Read the saved processed file and confirm its dimensions and key properties.
 ```
 
-**Your answer:** Describe two differences between raw collection and data cleaning. Why should a reproducible workflow keep those stages separate?
+**Your answer:** Describe two differences between raw collection and data cleaning. Why should a reproducible workflow keep those stages separate? What does your word count include beyond the spoken transcript?
 
+# Part 5: Responsible and reproducible collection
 
-# Part 4: Responsible and reproducible collection
-
-## 6. Reliability and ethics
+## 8. Reliability and ethics
 
 A scraper can collect publicly visible data and still be unreliable or inappropriate. Consider request load, site terms, attribution, copyright, personal information, and whether the data are necessary for the task.
 
-**Your answer:** Identify (1) one reliability risk and (2) one ethical, legal, or reproducibility concern in this lab. For each, suggest a practical mitigation. Do not collect more pages or data than the assignment requires.
+**Your answer:** Identify (1) one reliability risk and (2) one ethical or reproducibility concern in this lab. For each, suggest a practical mitigation. Do not collect additional pages to answer this question.
 
-# Part 5: AI Collaborator review
+# Part 6: AI Collaborator review
 
-## 7. Review proposed changes
+## 9. Review proposed additions
 
-Complete the two AI Collaborator interactions using the Lab 6 completion Issue template. Review each Pull Request rather than accepting it automatically. For the first review, pay special attention to scraping reliability; for the second, focus on data provenance, privacy, copyright, or reproducibility.
+Commit and push your completed work, then follow the README instructions for the two AI Collaborator interactions. Both propose an additional function for your scraper.
 
-After each Pull Request, answer its questions in a comment. Before merging, confirm that the change is bounded to this lab and does not remove validation, error handling, or the separation between raw and processed data.
+For each Pull Request, inspect the proposed function and answer all questions in a comment. Consider what it would request if called, whether the path fits the lab, and what the website's guidance says. Inspect the current `robots.txt` yourself rather than relying on the function's docstring. Do not execute a proposed function just to determine whether its request would be appropriate.
+
+Decide whether to merge or close each Pull Request and explain your reasoning. Adding a function definition does not itself make a request. You do not need to make a separate code revision when rejecting an inappropriate addition.
 
 # Final checklist
 
-- [ ] The raw data were collected from the live designated conference page.
-- [ ] The scraper has a descriptive User-Agent, timeout, status validation, and polite delay.
-- [ ] Duplicate URLs are removed and the scrape is bounded to one conference.
+- [ ] Source guidance was checked and documented before collection.
+- [ ] `extract_title()` is complete and works on both examples.
+- [ ] Raw data were collected from the live designated conference.
+- [ ] The scraper retains its User-Agent, timeout, status validation, and delay.
+- [ ] Duplicate URLs are removed and collection remains bounded.
 - [ ] Raw records are saved separately from processed records.
-- [ ] The processed data were created through code, not manual CSV edits.
+- [ ] Processed data were created through code, without manual CSV edits.
 - [ ] Validation checks run and their results are explained.
-- [ ] The HTML scraper is compared with a JSON API.
-- [ ] Reliability and ethical/reproducibility concerns are addressed.
-- [ ] Both AI Collaborator Pull Requests were reviewed and their questions answered.
-- [ ] `lab_6.qmd`, `lab_6.html`, scripts, and `uv.lock` are committed and pushed.
+- [ ] Extraction limitations and responsible-use concerns are addressed.
+- [ ] Both AI Pull Requests were reviewed, answered, and merged or closed with reasons.
+- [ ] `lab_6.qmd`, `lab_6.html`, scripts, `uv.lock`, and both CSV files are committed and pushed.

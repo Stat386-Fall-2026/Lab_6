@@ -1,7 +1,9 @@
 # Data files
 
-`scripts/scrape_data.py` writes extracted records to `raw/talks_raw.csv`. This file is the raw output of a live scrape of the official October 2025 General Conference index and its linked talk pages.
+After completing the source-guidance check and title-extraction function, run `uv run python scripts/scrape_data.py` from the repository root. It creates `data/raw/talks_raw.csv` from the live October 2025 conference index and its individual article pages.
 
-Do not edit the raw file manually. Re-run the script to recollect data. Keep transformations in code and write processed records to `processed/talks_clean.csv`.
+Record the collection date and any warnings in `lab_6.qmd`. Once collection works, keep the raw CSV unchanged. Perform transformations in code and save processed records to `data/processed/talks_clean.csv`.
 
-The source website can change over time. Record when you ran the scraper and inspect failures or unexpected empty fields rather than assuming the source is unchanged.
+The extracted text may include headings, bylines, and notes. The `date` field is intentionally blank, and speaker extraction may be incomplete. Document these limitations rather than inventing values.
+
+Commit both CSV files to your private course repository. Rendering the document should use the saved raw data rather than trigger another scrape.
