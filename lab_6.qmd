@@ -1,0 +1,158 @@
+---
+title: "STAT 386 Lab 6: Collecting Data from the Web"
+author: "Your Name"
+format:
+  html:
+    toc: true
+    embed-resources: true
+    code-fold: false
+execute:
+  echo: true
+  warning: true
+jupyter: python3
+---
+
+# Objective
+
+In Lab 5, you made cleaning decisions explicit and reproducible in a data-processing pipeline. In this lab, you will collect a small dataset from a live website, preserve the extracted records before cleaning, and compare HTML scraping with a JSON API.
+
+You will work with the official [October 2025 General Conference index](https://www.churchofjesuschrist.org/study/general-conference/2025/10?lang=eng). The goal is to collect talk metadata and transcript text for one conference—not to crawl the whole website.
+
+## Before you begin
+
+- Work only within the designated October 2025 conference.
+- Do not download a cached HTML file or use a prebuilt copy of the scraped output.
+- Keep requests polite and bounded. The provided script waits between talk-page requests and does not follow links outside the conference.
+- The raw file is evidence of what the scraper extracted. Do not manually edit it or silently clean text while scraping.
+- A page layout can change. If your scraper returns no talks, inspect the current page and explain the problem rather than weakening checks until it appears to work.
+
+# Part 1: Inspect the source page
+
+## 1. Understand the page structure
+
+Open the conference index in a browser. Identify how the page represents sessions and individual talks. Find two individual talk links and inspect one talk page.
+
+**Your answer:** In 3–5 sentences, explain the difference between HTML, an HTML element, a URL, and a row in a DataFrame. Why is the conference index a useful starting point for a bounded scrape?
+
+## 2. Run the starter scraper
+
+The reusable scraper is in `scripts/scrape_data.py`. Read it before running it.
+
+```{python}
+from pathlib import Path
+import pandas as pd
+
+raw_path = Path("data/raw/talks_raw.csv")
+print(f"Raw file exists: {raw_path.exists()}")
+```
+
+Run the scraper from the repository root in the terminal:
+
+```bash
+uv run python scripts/scrape_data.py
+```
+
+Then load the raw output:
+
+```{python}
+talks_raw = pd.read_csv("data/raw/talks_raw.csv")
+talks_raw.head()
+```
+
+Report the number of records and columns, the number of distinct links, and the number of records with empty transcript text.
+
+```{python}
+# Add your inspection code here.
+```
+
+**Your answer:** Did the extracted records match what you expected from the page? Identify one limitation or uncertainty in the fields the scraper extracted.
+
+# Part 2: Understand and validate the scraper
+
+## 3. Trace the collection process
+
+Read `scripts/scrape_data.py` and locate where it:
+
+- sends an HTTP request with a descriptive User-Agent;
+- sets a timeout and checks the HTTP status;
+- waits between requests;
+- limits links to the selected conference and removes duplicate URLs;
+- extracts title, speaker, and text; and
+- writes the raw records.
+
+**Your answer:** Explain why each of these practices matters. Include at least one example of how a scraper could appear to work while silently collecting incomplete or duplicated data.
+
+## 4. Add validation checks
+
+Write checks for the raw dataset. At minimum, check that:
+
+- the file contains at least one record;
+- every link is unique;
+- every link belongs to the designated conference;
+- talk titles are not all missing; and
+- transcript text is retained as extracted, without being replaced by a cleaned or normalized version.
+
+```{python}
+# Write validation checks here.
+```
+
+Do not assume that a successful HTTP response guarantees that the page contains the content you expected.
+
+# Part 3: Clean after collection
+
+## 5. Create a processed dataset
+
+Keep `data/raw/talks_raw.csv` unchanged. Create a separate processed file at `data/processed/talks_clean.csv`. Use the cleaning principles from Lab 5: make transformations explicit, preserve meaningful missing values, and validate the result.
+
+At minimum:
+
+- remove rows that are not individual talks, if any were collected;
+- standardize leading/trailing whitespace in title and speaker fields;
+- create a `year` column from the conference identifier or date information;
+- calculate `num_words` from transcript text; and
+- retain the source URL as `link`.
+
+Do not overwrite raw text. If you create a normalized text field, keep the original extracted text in the raw file and document the transformation.
+
+```{python}
+# Build talks_clean from talks_raw.
+# Save the result to data/processed/talks_clean.csv.
+```
+
+Check the processed data:
+
+```{python}
+# Read the saved processed file and confirm its dimensions and key properties.
+```
+
+**Your answer:** Describe two differences between raw collection and data cleaning. Why should a reproducible workflow keep those stages separate?
+
+
+# Part 4: Responsible and reproducible collection
+
+## 6. Reliability and ethics
+
+A scraper can collect publicly visible data and still be unreliable or inappropriate. Consider request load, site terms, attribution, copyright, personal information, and whether the data are necessary for the task.
+
+**Your answer:** Identify (1) one reliability risk and (2) one ethical, legal, or reproducibility concern in this lab. For each, suggest a practical mitigation. Do not collect more pages or data than the assignment requires.
+
+# Part 5: AI Collaborator review
+
+## 7. Review proposed changes
+
+Complete the two AI Collaborator interactions using the Lab 6 completion Issue template. Review each Pull Request rather than accepting it automatically. For the first review, pay special attention to scraping reliability; for the second, focus on data provenance, privacy, copyright, or reproducibility.
+
+After each Pull Request, answer its questions in a comment. Before merging, confirm that the change is bounded to this lab and does not remove validation, error handling, or the separation between raw and processed data.
+
+# Final checklist
+
+- [ ] The raw data were collected from the live designated conference page.
+- [ ] The scraper has a descriptive User-Agent, timeout, status validation, and polite delay.
+- [ ] Duplicate URLs are removed and the scrape is bounded to one conference.
+- [ ] Raw records are saved separately from processed records.
+- [ ] The processed data were created through code, not manual CSV edits.
+- [ ] Validation checks run and their results are explained.
+- [ ] The HTML scraper is compared with a JSON API.
+- [ ] Reliability and ethical/reproducibility concerns are addressed.
+- [ ] Both AI Collaborator Pull Requests were reviewed and their questions answered.
+- [ ] `lab_6.qmd`, `lab_6.html`, scripts, and `uv.lock` are committed and pushed.
