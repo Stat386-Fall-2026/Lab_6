@@ -1,8 +1,8 @@
-# Lab 6: Web scraping and APIs
+# Lab 6: Collecting Data from the Web
 
 ## Objective
 
-Use web scraping and APIs to collect data from online sources. You will inspect website scraping guidance, make HTTP requests, parse HTML with Beautiful Soup, retrieve and organize web data, and build a reproducible data-collection pipeline while following responsible scraping practices.
+Inspect a website's scraping guidance, complete a small HTML-extraction function, and collect records from one General Conference. Preserve the raw output, create a processed dataset, and evaluate two proposed AI changes to the scraper.
 
 ## Create your personal repository
 
@@ -19,93 +19,68 @@ Clone your personal repository inside your `School/STAT_386` folder:
 ```bash
 git clone <your-repository-url>
 cd <your-repository-name>
-```
-
-Install the project dependencies:
-
-```bash
 uv sync
 ```
 
-The first time you run this command, `uv` will create a `uv.lock` file. Include
-that file in your first commit.
+The first time you run `uv sync`, it will create a `uv.lock` file. Include that file in your commits.
 
-Open the repository folder in Positron. If Positron asks you to select a Python
-interpreter, select the interpreter inside the `.venv` folder created by `uv`.
+Open the repository folder in Positron. Select the Python interpreter inside the `.venv` folder created by `uv`.
 
 ## Complete the lab
 
-Open `lab_6.qmd` and replace `Your Name` with your name. Complete every code
-section and every written response. You can preview the document while you
-work by running:
+Open `lab_6.qmd` and replace `Your Name` with your name. Work through the sections in order.
+
+Before running the scraper, complete the source-guidance check and the `extract_title()` function in `scripts/scrape_data.py`. The supplied code handles requests, delays, link discovery, and CSV output.
+
+After completing the function and checking the source guidance, collect the data from the repository root:
+
+```bash
+uv run python scripts/scrape_data.py
+```
+
+The scraper creates `data/raw/talks_raw.csv`. Complete the remaining code and written responses in `lab_6.qmd`, including code that creates `data/processed/talks_clean.csv`.
+
+Once the raw data have been collected successfully, keep that file unchanged while cleaning and rendering. Rendering the document should read the saved CSV rather than run the scraper again.
+
+You can preview your document with:
 
 ```bash
 uv run quarto preview lab_6.qmd
 ```
 
-Stop the preview by pressing `Ctrl+C` in the terminal.
-
-Make several meaningful commits as you work. For example:
+Stop the preview by pressing `Ctrl+C` in the terminal. Make several meaningful commits as you work. For example:
 
 ```bash
-git add lab_6.qmd
-git commit -m "Create keyword features"
+git add scripts/scrape_data.py lab_6.qmd uv.lock
+git commit -m "Complete title extraction and source inspection"
 git push
 ```
-
-## Render and submit
-
-Before submitting, restart your work from a clean session and render the final
-document:
-
-```bash
-uv run quarto render lab_6.qmd
-```
-
-Commit and push both the source document and the rendered HTML file:
-
-```bash
-git add lab_6.qmd lab_6.html uv.lock
-git commit -m "Complete Lab 6"
-git push
-```
-
-Follow the submission directions provided in Canvas.
 
 ## Work with the AI Collaborator
 
-During this lab, you will interact with the course AI collaborator twice. Each interaction will create a Pull Request containing a proposed change to your repository.
+After completing the collection, cleaning, and written responses, commit and push your work. You will then review two proposed additions to your scraper. Each interaction creates a Pull Request.
 
-For each Pull Request, carefully review both the proposed code and the questions included in the Pull Request description. Do not assume that a proposed change should automatically be accepted.
+Both reviews ask whether an additional function is appropriate for this lab. Inspect its code, the requested path, the website's guidance, and the assignment's scope. You can evaluate a proposed request without executing it. Adding a function definition does not by itself send a request.
 
-### First AI Collaborator Interaction
+### First AI Collaborator interaction
 
-Create a new Issue using the **Lab 6 Complete** Issue template if it is available.
+Create a new Issue using the **Lab 6 Complete** Issue template. If the template is unavailable, create a regular Issue titled `Lab 6 complete`; its description can be empty.
 
-Use the following title:
-
-```text
-Lab 6 complete
-```
-
-The Issue description can be empty.
-
-Post the first AI collaborator processing command as a new comment on the Issue:
+Post the following command as a **new comment**, not in the Issue description:
 
 ```text
 @local-llm-user process config-dir: Lab_6/metadata_01.yml in instructor-repo: Stat386-Fall-2026/Instructor_Repo
 ```
 
-The command must be posted as a comment, not in the Issue description.
+Once the collaborator creates a Pull Request:
 
-Once the collaborator finishes processing your repository, it will create a Pull Request.
+1. Read the Pull Request description.
+2. Inspect the proposed code in **Files changed**.
+3. Answer every review question in a comment on that Pull Request.
+4. Explain whether the proposed addition fits the lab and respects the website's guidance.
+5. Merge the Pull Request if appropriate, or close it without merging if inappropriate.
 
-1. Open the Pull Request created by the collaborator.
-2. Read the Pull Request description carefully.
-3. Review the proposed changes in the **Files changed** tab.
-4. Answer each question included in the Pull Request description.
-5. Post your answers as a comment on that Pull Request.
-6. Decide whether the proposed change should be included in your repository based on your review.
+You are evaluated on your reasoning, not on accepting the change. You do not need to execute the proposed function or make a separate code revision to reject it.
 
 If you merge the Pull Request, update your local repository before continuing:
 
@@ -113,62 +88,65 @@ If you merge the Pull Request, update your local repository before continuing:
 git pull
 ```
 
-Make sure you understand the changes that were added before continuing with the lab.
+### Second AI Collaborator interaction
 
-### Second AI Collaborator Interaction
+After reviewing the first Pull Request, return to the **same Lab 6 completion Issue**. If the Issue was closed automatically, reopen it before posting the next command.
 
-After completing your review of the first Pull Request, return to the same Lab 4 completion Issue.
-
-Post the second AI collaborator processing command as a new comment:
+Post the following command as a new comment:
 
 ```text
 @local-llm-user process config-dir: Lab_6/metadata_02.yml in instructor-repo: Stat386-Fall-2026/Instructor_Repo
 ```
 
-Once processing is complete, the collaborator will create a second Pull Request.
+Review the second Pull Request using the same process. Answer all questions in a comment and explain your decision to merge or close it. If you merge it, run `git pull` again.
 
-1. Open the second Pull Request.
-2. Read the Pull Request description carefully.
-3. Review the proposed changes in the **Files changed** tab.
-4. Answer each question included in the Pull Request description.
-5. Post your answers as a comment on that Pull Request.
-6. Decide whether the proposed change should be included in your repository based on your review.
+## Render and submit
 
-Remember that code can run successfully without necessarily being an appropriate change to the analysis. Your goal is to evaluate the proposed change rather than automatically accept it.
-
-If you merge the second Pull Request, update your local repository again:
+After both reviews, render the final document from a fresh session:
 
 ```bash
-git pull
+uv run quarto render lab_6.qmd
 ```
 
-Complete both AI collaborator interactions and respond to the questions in both Pull Requests before finishing the lab.
+Commit and push your source document, rendered HTML, completed script, dependency lockfile, and both datasets:
+
+```bash
+git add lab_6.qmd lab_6.html scripts/scrape_data.py uv.lock data/raw/talks_raw.csv data/processed/talks_clean.csv
+git commit -m "Complete Lab 6"
+git push
+```
+
+Follow the submission directions provided in Canvas.
 
 ## Before you finish
 
 - [ ] Your name appears in the document header.
-- [ ] Every code section is complete.
-- [ ] Every written response is complete.
-- [ ] Your term counts are case-insensitive.
-- [ ] You compare raw counts with rates based on talk length.
-- [ ] Every plot has a useful title and axis labels.
-- [ ] `lab_6.qmd` renders without errors.
-- [ ] `lab_6.html` and `uv.lock` are committed.
+- [ ] The source-guidance check is documented before collection.
+- [ ] `extract_title()` is complete and works on both supplied examples.
+- [ ] Every code section and written response is complete.
+- [ ] Raw and processed data are saved separately and committed.
+- [ ] Cleaning is performed in code, without manually editing the raw CSV.
+- [ ] Validation results and extraction limitations are explained.
+- [ ] Both AI Pull Requests have your answers and a justified merge/close decision.
+- [ ] `lab_6.qmd` renders without errors using the saved raw data.
+- [ ] `lab_6.html`, scripts, and `uv.lock` are committed.
 - [ ] All commits are pushed to GitHub.
-- [ ] You answered the collaborator's questions.
 
 ## Repository contents
 
 ```text
 Lab_6/
-├── data/
-│   ├── README.md
-│   └── talks.csv
 ├── .github/
 │   └── ISSUE_TEMPLATE/
 │       └── lab-6-complete.md
 ├── .gitignore
 ├── README.md
 ├── lab_6.qmd
-└── pyproject.toml
+├── pyproject.toml
+├── data/
+│   └── HeadsUp.md
+└── scripts/
+    └── scrape_data.py
 ```
+
+Your work will add `uv.lock`, `lab_6.html`, `data/raw/talks_raw.csv`, and `data/processed/talks_clean.csv`.

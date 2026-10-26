@@ -4,7 +4,9 @@ Run from the repository root:
     uv run python scripts/scrape_data.py
 
 The script deliberately saves extracted values before downstream cleaning.
-It does not attempt to crawl other conferences or the wider website.
+Complete extract_title() before running the script.
+Check the source guidance as directed in lab_6.qmd before collection.
+The script does not attempt to crawl other conferences or the wider website.
 """
 from __future__ import annotations
 
@@ -57,6 +59,8 @@ def fetch_html(session: requests.Session, url: str) -> str:
             f"Expected HTML from {url}, received Content-Type={content_type!r}"
         )
     return response.text
+
+
 def discover_talk_urls(index_html: str) -> list[str]:
     """Find individual talk pages that belong to the selected conference."""
     soup = BeautifulSoup(index_html, "html.parser")
@@ -96,15 +100,18 @@ def discover_talk_urls(index_html: str) -> list[str]:
     return urls[:MAX_TALK_PAGES]
 
 
+def extract_title(soup: BeautifulSoup) -> str:
+    """Return the h1 text, fall back to title text, or return an empty string."""
+    # TODO: Complete this function using the steps in lab_6.qmd.
+    # Preserve extracted whitespace; only use .strip() to check for blank text.
+    raise NotImplementedError("Complete extract_title() before collecting data.")
+
+
 def extract_talk_record(url: str, html: str) -> dict[str, str]:
-    """Extract conservative metadata and the visible article text."""
+    """Extract metadata and text from the selected article region."""
     soup = BeautifulSoup(html, "html.parser")
 
-    # Prefer the page's primary heading, with <title> as a fallback.
-    heading = soup.select_one("h1")
-    title = heading.get_text(" ", strip=False) if heading else ""
-    if not title.strip() and soup.title:
-        title = soup.title.get_text(" ", strip=False)
+    title = extract_title(soup)
 
     # Meta descriptions often contain a byline or summary, but are not assumed
     # to be the speaker's name. The speaker field stays blank unless a byline
@@ -125,6 +132,7 @@ def extract_talk_record(url: str, html: str) -> dict[str, str]:
     if article is None:
         raise RuntimeError(f"Could not find a main article/content region on {url}")
 
+    # This region may include headings, bylines, and notes.
     # Preserve the extracted text as-is apart from HTML-to-text extraction.
     # Do not collapse whitespace or apply the cleaning rules from Lab 5 here.
     text = article.get_text(separator="\n", strip=False)
@@ -163,6 +171,9 @@ def main() -> None:
             logging.info("Fetching talk %s/%s", number, len(talk_urls))
             html = fetch_html(session, url)
             records.append(extract_talk_record(url, html))
+        except NotImplementedError:
+            # Stop immediately if the student function is still incomplete.
+            raise
         except RuntimeError as exc:
             failures.append(str(exc))
             logging.warning("%s", exc)
